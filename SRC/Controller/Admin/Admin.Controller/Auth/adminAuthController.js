@@ -1031,10 +1031,7 @@ export const adminLogout = async (req, res) => {
     const refreshToken = req.cookies?.refreshToken;
 
     if (refreshToken) {
-      await RefreshToken.findOneAndUpdate(
-        { token: refreshToken, userId: adminId },
-        { isRevoked: true }
-      );
+     await RefreshToken.revokeAllForUser(adminId)
     }
 
     const clearOptions = {
@@ -1044,8 +1041,8 @@ export const adminLogout = async (req, res) => {
       path:     '/',
     };
 
-    res.clearCookie('accessToken',  clearOptions);
-    res.clearCookie('refreshToken', clearOptions);
+     res.clearCookie('accessToken',  COOKIE_OPTIONS.ACCESS_TOKEN);
+    res.clearCookie('refreshToken', COOKIE_OPTIONS.REFRESH_TOKEN);
 
     await logAdminActivity(adminId, 'LOGOUT', 'admin', adminId);
 

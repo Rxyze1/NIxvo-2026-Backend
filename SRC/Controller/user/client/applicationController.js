@@ -6,8 +6,7 @@ import {
   sendApplicationAccepted,
   sendApplicationRejected,
 } from '../../../Email/emailService.js';
-
-
+import validationService from '../../../Service/validationService.js';   // ✅ ADD
 
 
 const buildBadge = (emp) => {
@@ -37,12 +36,27 @@ const buildBadge = (emp) => {
   };
 };
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ✅ SHARED: Validate message for contact info leaks
+// ═══════════════════════════════════════════════════════════════════════════
+const validateMessage = async (message) => {
+  if (!message || typeof message !== 'string' || !message.trim()) return null;
 
+  console.log('🔍 ══════════════════════════════════════');
+  console.log('🔍  MESSAGE VALIDATION (Contact Leak Check)');
+  console.log('🔍 ══════════════════════════════════════\n');
 
+  const result = await validationService.validateContent(message, 'client_message');
+
+  console.log(`📊 Result: blocked=${result.blocked}, source=${result.source}, confidence=${result.confidence}%`);
+  if (result.matched?.length) console.log(`   Matched: ${result.matched.join(', ')}`);
+
+  return result;
+};
 
 
 // ════════════════════════════════════════════════════════════════════════════
-// 1️⃣  GET ALL APPLICANTS — who applied & on which job
+// 1️⃣  GET ALL APPLICANTS — (unchanged, no message input here)
 // ════════════════════════════════════════════════════════════════════════════
 
 export const getAllApplicants = async (req, res) => {
@@ -62,9 +76,6 @@ export const getAllApplicants = async (req, res) => {
 
     console.log(`\n👥 Client ${userId} — fetching all applicants`);
 
-    // ─────────────────────────────────────────────────────────────
-    // STEP 1: Find all jobs owned by this client
-    // ─────────────────────────────────────────────────────────────
     const jobs = await Job.find({ userId })
       .select('_id jobTitle price currency status needFor requiredSkills postedAt')
       .lean();
@@ -82,9 +93,6 @@ export const getAllApplicants = async (req, res) => {
     const jobIds = jobs.map(j => j._id);
     console.log(`   ✅ ${jobs.length} job(s) found\n`);
 
-    // ─────────────────────────────────────────────────────────────
-    // STEP 2: Build query — filter by status / search
-    // ─────────────────────────────────────────────────────────────
     const query = { jobId: { $in: jobIds } };
 
     if (status && status !== 'all') {
@@ -110,28 +118,21 @@ export const getAllApplicants = async (req, res) => {
 
     const totalCount = await Application.countDocuments(query);
 
-    // ─────────────────────────────────────────────────────────────
-    // STEP 3: Fetch applications with full population
-    // ─────────────────────────────────────────────────────────────
     const applications = await Application.find(query)
-
-// TO ✅ — add subscription populate
-.populate({
-  path:   'employeeProfileId',
-  select: 'userId profilePic profileBannerImage bio skills experience hourlyRate verifiedBadge hasBadge badgeType badgeLabel blueVerified adminVerified subscription jobStats portfolio reviews availability',
-  populate: [
-    {
-      path:   'userId',
-      select: 'fullname username email phone profilePicture ratings stats wallet createdAt',
-    },
-    {
-      path:   'subscription',
-      select: 'plan subscriptionStatus planExpiresAt',
-    },
-  ],
-})
-
-
+      .populate({
+        path:   'employeeProfileId',
+        select: 'userId profilePic profileBannerImage bio skills experience hourlyRate verifiedBadge hasBadge badgeType badgeLabel blueVerified adminVerified subscription jobStats portfolio reviews availability',
+        populate: [
+          {
+            path:   'userId',
+            select: 'fullname username email phone profilePicture ratings stats wallet createdAt',
+          },
+          {
+            path:   'subscription',
+            select: 'plan subscriptionStatus planExpiresAt',
+          },
+        ],
+      })
       .populate({
         path:   'employeeId',
         select: 'fullname username email phone profilePicture ratings stats wallet createdAt',
@@ -147,29 +148,18 @@ export const getAllApplicants = async (req, res) => {
 
     console.log(`   ✅ ${applications.length} application(s) fetched\n`);
 
-    // ─────────────────────────────────────────────────────────────
-    // STEP 4: Format each application
-    // ─────────────────────────────────────────────────────────────
     const formattedApplicants = applications.map(app => {
-
       const ep   = app.employeeProfileId;
-
       const user = app.employeeId || ep?.userId;
 
-
-      // ✅ Inline premium check — don't trust stale blueVerified.status
-const epSub = ep?.subscription;
-const epIsPremium = !!(
-  epSub &&
-  typeof epSub === 'object' &&
-  epSub.plan === 'premium' &&
-  ['active', 'cancelled'].includes(epSub.subscriptionStatus) &&
-  new Date() < new Date(epSub.planExpiresAt)
-);
-
-
-
-
+      const epSub = ep?.subscription;
+      const epIsPremium = !!(
+        epSub &&
+        typeof epSub === 'object' &&
+        epSub.plan === 'premium' &&
+        ['active', 'cancelled'].includes(epSub.subscriptionStatus) &&
+        new Date() < new Date(epSub.planExpiresAt)
+      );
 
       return {
         id:             app._id,
@@ -224,35 +214,25 @@ const epIsPremium = !!(
 
           verifiedBadge: ep?.verifiedBadge || false,
 
-            // ── ADD THESE ↓
-  badge: ep?.hasBadge ? {
-    show:   true,
-    type:   ep.badgeType,
-    label:  ep.badgeLabel,
-    icon:   ep.badgeType === 'blue-verified'  ? 'verified'     :
-            ep.badgeType === 'admin-verified'  ? 'shield-check' : 'badge',
-    color:  ep.badgeType === 'blue-verified'  ? '#0066FF'       :
-            ep.badgeType === 'admin-verified'  ? '#00B37E'       : '#888',
-    bg:     ep.badgeType === 'blue-verified'  ? '#EBF5FF'       :
-            ep.badgeType === 'admin-verified'  ? '#E6FAF5'       : '#f0f0f0',
-  } : { show: false },
+          badge: ep?.hasBadge ? {
+            show:   true,
+            type:   ep.badgeType,
+            label:  ep.badgeLabel,
+            icon:   ep.badgeType === 'blue-verified'  ? 'verified'     :
+                    ep.badgeType === 'admin-verified'  ? 'shield-check' : 'badge',
+            color:  ep.badgeType === 'blue-verified'  ? '#0066FF'       :
+                    ep.badgeType === 'admin-verified'  ? '#00B37E'       : '#888',
+            bg:     ep.badgeType === 'blue-verified'  ? '#EBF5FF'       :
+                    ep.badgeType === 'admin-verified'  ? '#E6FAF5'       : '#f0f0f0',
+          } : { show: false },
 
+          blueVerified: epIsPremium
+            ? { status: true, icon: 'verified', color: '#0066FF', bg: '#EBF5FF', label: 'Premium Member' }
+            : { status: false },
 
-
-// TO ✅ — use epIsPremium you already computed
-blueVerified: epIsPremium  // ✅ USE epIsPremium (already computed above)
-    ? { status: true, icon: 'verified', color: '#0066FF', bg: '#EBF5FF', label: 'Premium Member' }
-    : { status: false },
-
-
-    
-adminVerified: { status: ep?.adminVerified?.status ?? false },
-tier: epIsPremium ? 'premium'
-  : ep?.adminVerified?.status ? 'verified' : 'free',
-
-
-
-  // ── END ADD ↑
+          adminVerified: { status: ep?.adminVerified?.status ?? false },
+          tier: epIsPremium ? 'premium'
+            : ep?.adminVerified?.status ? 'verified' : 'free',
 
           jobStats: {
             totalCompleted: ep?.jobStats?.totalCompleted || 0,
@@ -330,9 +310,6 @@ tier: epIsPremium ? 'premium'
       };
     });
 
-    // ─────────────────────────────────────────────────────────────
-    // STEP 5: Group by job — only jobs that have applications
-    // ─────────────────────────────────────────────────────────────
     const jobMap = Object.fromEntries(jobs.map(j => [j._id.toString(), j]));
 
     const groupedByJob = Object.values(
@@ -371,9 +348,6 @@ tier: epIsPremium ? 'premium'
       }, {})
     );
 
-    // ─────────────────────────────────────────────────────────────
-    // FINAL RESPONSE
-    // ─────────────────────────────────────────────────────────────
     return res.json({
       success:    true,
       count:      formattedApplicants.length,
@@ -420,10 +394,25 @@ tier: epIsPremium ? 'premium'
 export const acceptApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const   message          = req.body?.message || null;
-    const   userId           = req.user._id;
+    const message = req.body?.message || null;
+    const userId  = req.user._id;
 
     console.log(`\n✅ Accepting application ${applicationId}`);
+
+    // ══════════════════════════════════════════════════════════
+    // ✅ VALIDATE MESSAGE — before ANY DB write
+    // ══════════════════════════════════════════════════════════
+    const validation = await validateMessage(message);
+    if (validation?.blocked) {
+      console.log('🚫 Message BLOCKED — contact info leak detected\n');
+      return res.status(400).json({
+        success:    false,
+        message:    'Your message contains contact information or off-platform redirect attempts. Please remove any emails, phone numbers, URLs, or social media handles and try again.',
+        violations: validation.matched || [],
+        reason:     validation.reason,
+      });
+    }
+    console.log('✅ Message passed validation\n');
 
     const application = await Application.findById(applicationId)
       .populate({ path: 'jobId',      select: 'userId status selectedFreelancer jobTitle description price deliveryTime images needFor' })
@@ -536,10 +525,25 @@ export const acceptApplication = async (req, res) => {
 export const rejectApplication = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const   message          = req.body?.message || null;
-    const   userId           = req.user._id;
+    const message = req.body?.message || null;
+    const userId  = req.user._id;
 
     console.log(`\n🚫 Rejecting application ${applicationId}`);
+
+    // ══════════════════════════════════════════════════════════
+    // ✅ VALIDATE MESSAGE — before ANY DB write
+    // ══════════════════════════════════════════════════════════
+    const validation = await validateMessage(message);
+    if (validation?.blocked) {
+      console.log('🚫 Message BLOCKED — contact info leak detected\n');
+      return res.status(400).json({
+        success:    false,
+        message:    'Your message contains contact information or off-platform redirect attempts. Please remove any emails, phone numbers, URLs, or social media handles and try again.',
+        violations: validation.matched || [],
+        reason:     validation.reason,
+      });
+    }
+    console.log('✅ Message passed validation\n');
 
     const application = await Application.findById(applicationId)
       .populate({ path: 'jobId',      select: 'userId jobTitle description images' })
@@ -565,7 +569,6 @@ export const rejectApplication = async (req, res) => {
     };
     await application.save();
 
-    // ── Non-blocking email ────────────────────────────────────
     sendApplicationRejected(
       application.employeeId.email,
       application.employeeId.fullname,
