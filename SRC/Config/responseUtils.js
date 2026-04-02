@@ -37,7 +37,7 @@ export const createdResponse = (res, data = null, message = 'Resource created su
 /**
  * Error Response (400, 404, 500, etc.)
  */
-export const errorResponse = (res, message = 'Error occurred', statusCode = 400, errors = null) => {
+export const errorResponse = (res, statusCode = 400, message = 'Error occurred', errors = null) => {
     const response = {
         success: false,
         message,
