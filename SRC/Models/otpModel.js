@@ -146,27 +146,33 @@ otpSchema.statics.resendCode = async function(email, purpose) {
         return { error: true, message: 'Please register first' };
     }
     
-    // Create new OTP with old data
+    // Save old data before deleting
+    const savedData = {
+        fullname: oldOTP.fullname,
+        username: oldOTP.username,
+        phone:    oldOTP.phone,
+        password: oldOTP.password,
+        userType: oldOTP.userType,
+        adminRole: oldOTP.adminRole,
+    };
+
+    // ✅ DELETE ALL old OTPs for this email+purpose first
+    await this.deleteMany({ email: sanitizedEmail, purpose });
+    
     const newOtpCode = this.generateCode();
     
     const newOTP = await this.create({
-        email: sanitizedEmail,
-        otp: newOtpCode,
+        email:     sanitizedEmail,
+        otp:       newOtpCode,
         purpose,
-        fullname: oldOTP.fullname,
-        username: oldOTP.username,
-        phone: oldOTP.phone,
-        password: oldOTP.password,
-        userType: oldOTP.userType,
-        adminRole: oldOTP.adminRole,  // ✅ ADD THIS!
+        ...savedData,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-        attempts: 0,
-        isUsed: false,
+        attempts:  0,
+        isUsed:    false,
     });
     
     return { otp: newOtpCode, _id: newOTP._id };
 };
-
 
 
 
