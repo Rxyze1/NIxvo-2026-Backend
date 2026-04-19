@@ -211,12 +211,9 @@ app.use('/api/v1/employee/notifications',EmployeeNotificationRouter);
 // Recomendation - ROute
 app.use('/api/both/recomendation',RecomendationNotificationRouter);
 
-
-
 // Admin
 app.use('/api/admin/auth',           AdminAuthRoutes);
 app.use('/api/admin/employeeManagement', EmployeeManagementRouter);
-
 
 // app.use('/api/admin/allusermanagement',AllUserManagementRouter)
 
@@ -259,6 +256,7 @@ app.use('/api/v1/certificate', Certificaterouter);
 // ═════════════════════════════════════════════════════════════
 // ERROR HANDLING
 // ═════════════════════════════════════════════════════════════
+
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.path}` });
@@ -316,10 +314,13 @@ const shutdown = async (signal) => {
   setTimeout(() => { console.error('❌ Shutdown timed out'); process.exit(1); }, 10_000);
 };
 
+
 process.on('SIGTERM',            () => shutdown('SIGTERM'));
 process.on('SIGINT',             () => shutdown('SIGINT'));
 process.on('uncaughtException',  (e) => { console.error('❌ Uncaught Exception:',  e); shutdown('UNCAUGHT EXCEPTION'); });
 process.on('unhandledRejection', (e) => { console.error('❌ Unhandled Rejection:', e); shutdown('UNHANDLED REJECTION'); });
+
+
 
 if (process.env.NODE_ENV !== 'development') {
   setInterval(async () => {

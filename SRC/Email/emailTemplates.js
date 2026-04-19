@@ -1612,6 +1612,9 @@ export const applicationRejectedTemplate = (
 
 // services/Email/emailTemplates.js
 
+
+
+
 // ... (your existing templates)
 
 // ═══════════════════════════════════════════════════════════════
@@ -1621,6 +1624,10 @@ export const applicationRejectedTemplate = (
 /**
  * Subscription Activated - Simple Notification
  */
+
+
+
+
 export const subscriptionActivatedTemplate = (
   fullname, 
   planName, 
@@ -1673,24 +1680,23 @@ export const subscriptionActivatedTemplate = (
       </div>
 
       <div class="info-box" style="background: #e8f5e9; border-color: #4caf50;">
+
         <strong style="color: #2e7d32;">🎯 Features Unlocked:</strong>
+
         <ul style="color: #2e7d32;">
           ${features.verifiedBadge ? '<li>✅ Verified Badge</li>' : ''}
           ${features.unlimitedJobs ? '<li>✅ Unlimited Job Posts</li>' : ''}
           ${features.prioritySupport ? '<li>✅ Priority Support</li>' : ''}
           ${features.priorityListing ? '<li>✅ Priority Listing</li>' : ''}
         </ul>
+
       </div>
 
-      <center>
-        <a href="${appConfig.appUrl}/subscription/invoice/${invoiceNumber}" class="button" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);">
-          📄 Download Invoice
-        </a>
-      </center>
     </div>
   `;
   return baseTemplate(content);
 };
+
 
 /**
  * Subscription Expiring Soon
@@ -1712,12 +1718,16 @@ export const subscriptionExpiringTemplate = (
       <p>Your <strong>${planName}</strong> subscription will expire soon.</p>
       
       <div class="warning-box">
+
         <div style="text-align: center; margin: 20px 0;">
+
           <div style="font-size: 64px; font-weight: bold; color: #ff9800;">
             ${daysRemaining}
           </div>
+
           <div style="color: #e65100; margin-top: 10px; font-weight: bold;">Days Remaining</div>
         </div>
+
       </div>
 
       <div class="payment-details">
@@ -1798,11 +1808,14 @@ export const subscriptionRenewedTemplate = (
   transactionId
 ) => {
   const content = `
+  
     <div class="header" style="background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);">
       <h1>✅ Subscription Renewed!</h1>
       <p>Your premium access has been extended</p>
     </div>
+
     <div class="content">
+
       <p>Hi <strong>${fullname}</strong>,</p>
       <p>Your <strong>${planName}</strong> subscription has been renewed successfully.</p>
       
@@ -1811,29 +1824,29 @@ export const subscriptionRenewedTemplate = (
       </div>
 
       <div class="payment-details">
+
         <div class="payment-row">
           <span><strong>Plan:</strong></span>
           <span>${planName}</span>
         </div>
+
         <div class="payment-row">
           <span><strong>Amount:</strong></span>
           <span style="color: #2196f3; font-weight: bold;">₹${planPrice.toLocaleString('en-IN')}</span>
         </div>
+
         <div class="payment-row">
           <span><strong>New Expiry:</strong></span>
           <span style="color: #4caf50; font-weight: bold;">${new Date(newEndDate).toLocaleDateString('en-IN')}</span>
         </div>
+
         <div class="payment-row">
           <span><strong>Invoice:</strong></span>
           <span style="font-family: monospace;">${invoiceNumber}</span>
         </div>
+
       </div>
 
-      <center>
-        <a href="${appConfig.appUrl}/subscription/invoice/${invoiceNumber}" class="button">
-          📄 Download Invoice
-        </a>
-      </center>
     </div>
   `;
   return baseTemplate(content);

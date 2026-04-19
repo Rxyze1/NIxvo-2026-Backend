@@ -74,10 +74,13 @@ import {
 
 } from './paymentEmailTemplates.js';
 
+
+
+
 /**
  * ════════════════════════════════════════════════════════════════
  *                    📧 EMAIL SERVICE INITIALIZATION
- *              Uses AWS SES SMTP (Port 587)
+ *              Uses Mailtrap SMTP (Port 587)
  * ════════════════════════════════════════════════════════════════
  */
 
@@ -85,15 +88,14 @@ console.log('');
 console.log('════════════════════════════════════════════════════════════════');
 console.log('📧 EMAIL SERVICE INITIALIZATION');
 console.log('════════════════════════════════════════════════════════════════');
-console.log(`🌐 SMTP Host:   ${emailConfig.host}`);
-console.log(`🔌 Port:        ${emailConfig.port}`);
-console.log(`📤 From Email:  ${emailConfig.from.email}`);
-console.log(`📛 From Name:   ${emailConfig.from.name}`);
-console.log(`🔑 AWS User:    ${emailConfig.auth.user ? '✅ Configured' : '❌ Missing'}`);
-console.log(`🔑 AWS Pass:    ${emailConfig.auth.pass ? '✅ Configured' : '❌ Missing'}`);
+console.log(`🌐 SMTP Host:     ${emailConfig.host}`);
+console.log(`🔌 Port:          ${emailConfig.port}`);
+console.log(`📤 From Email:    ${emailConfig.from.email}`);
+console.log(`📛 From Name:     ${emailConfig.from.name}`);
+console.log(`🔑 Mailtrap User: ${emailConfig.auth.user ? '✅ Configured' : '❌ Missing'}`);
+console.log(`🔑 Mailtrap Pass: ${emailConfig.auth.pass ? '✅ Configured' : '❌ Missing'}`);
 console.log('════════════════════════════════════════════════════════════════');
 console.log('');
-
 
 /**
  * ═══════════════════════════════════════════════════════════════
@@ -118,18 +120,12 @@ const sendEmail = async ({ to, subject, html, text = '', category = 'General' })
     try {
         console.log(`📧 Sending: ${subject} → ${to}`);
 
-               // Automatically remove spaces for AWS SES tag rules
-        const cleanCategory = category.replace(/\s+/g, '');
-
         const mailOptions = {
             from: `"${emailConfig.from.name}" <${emailConfig.from.email}>`,
             to: to,
             subject: subject,
             html: html,
             text: text || subject,
-            headers: {
-                'X-SES-MESSAGE-TAGS': `Category=${cleanCategory}` 
-            }
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -145,6 +141,8 @@ const sendEmail = async ({ to, subject, html, text = '', category = 'General' })
         throw new Error(`Failed to send email: ${error.message}`);
     }
 };
+
+
 /**
  * ═══════════════════════════════════════════════════════════════
  *                   OTP EMAILS (3 FUNCTIONS)
@@ -152,6 +150,7 @@ const sendEmail = async ({ to, subject, html, text = '', category = 'General' })
  */
 
 // 1. Signup OTP
+
 export const sendSignupOTP = async (email, otp, fullname) => {
     const html = otpSignupTemplate(otp, fullname);
     return await sendEmail({
