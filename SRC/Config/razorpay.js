@@ -7,6 +7,9 @@ dotenv.config();
 // ─────────────────────────────────────────────────────────────
 // MODE — determined once at startup
 // ─────────────────────────────────────────────────────────────
+
+export const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === 'true';
+
 const IS_LIVE = process.env.RAZORPAY_LIVE_MODE === 'true';
 
 const KEY_ID     = IS_LIVE ? process.env.RAZORPAY_KEY_ID     : process.env.RAZORPAY_TEST_KEY_ID;
@@ -60,6 +63,7 @@ console.log('══════════════════════�
 console.log(`🔑  Key ID   : ${KEY_ID.substring(0, 12)}...`);
 console.log(`🔐  Secret   : ✅ Configured`);
 console.log(`🌍  Mode     : ${IS_LIVE ? '🔴 LIVE — real payments' : '🟡 TEST — no real payments'}`);
+console.log(`💳  Payments : ${PAYMENT_ENABLED ? '✅ ENABLED' : '🔴 DISABLED (feature flag off)'}`);
 console.log(`⚙️   Node env : ${process.env.NODE_ENV || 'development'}`);
 console.log('════════════════════════════════════════════════════');
 console.log('');

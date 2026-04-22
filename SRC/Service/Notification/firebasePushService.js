@@ -7,6 +7,9 @@ const EXPO_API = 'https://exp.host/--/api/v2/push/send';
 // ═══════════════════════════════════════════════════════════════
 // 🚀 THE ONLY FUNCTION YOU WILL EVER NEED
 // ═══════════════════════════════════════════════════════════════
+
+
+
 export const sendPush = async ({ userId, title, body, data = {} }) => {
   console.log('\n🔥 ━━━━━━━━━ FIREBASE PUSH SERVICE ━━━━━━━━━');
   console.log(`📍 Target User ID: ${userId}`);
@@ -42,6 +45,7 @@ export const sendPush = async ({ userId, title, body, data = {} }) => {
     console.error('💥 FATAL PUSH ERROR:', error.message);
   }
 };
+
 
 // ═══════════════════════════════════════════════════════════════
 // 📲 EXPO GO SENDER
@@ -80,14 +84,13 @@ const sendViaFirebase = async (tokens, title, body, data) => {
     token: t.token,
     notification: { title, body },
     data: sanitizeData(data), // ✅ sanitized
-    android: {
-      priority: 'high',
-      notification: {
-        clickAction: 'com.takeshi001.Nixvo',
-        channelId: 'default',
-        sound: 'default', // ✅ string, not boolean
-      }
-    },
+ android: {
+  priority: 'high',
+  notification: {
+    channelId: 'default',
+    sound: 'default',
+  }
+},
     apns: {
       payload: { aps: { sound: 'default', badge: 1 } }
     }
@@ -114,3 +117,8 @@ const sendViaFirebase = async (tokens, title, body, data) => {
     console.error('   💥 Firebase Admin Crash:', error.message);
   }
 };
+
+
+// ═══════════════════════════════════════════════════════════════
+// 🛠️ INTEGRATION WITH NOTIFICATION MODEL
+// ═══════════════════════════════════════════════════════════════

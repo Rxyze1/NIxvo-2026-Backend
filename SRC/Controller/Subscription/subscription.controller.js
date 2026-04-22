@@ -3,7 +3,7 @@
 import SubscriptionService from '../../Service/Subscription/subscription.service.js';
 import User                from '../../Models/USER-Auth/User-Auth.-Model.js';
 import Subscription        from '../../Models/Subscription/Subscription.Model.js';
-import { RAZORPAY_EVENTS, IS_LIVE }      from '../../Config/razorpay.js';
+import { RAZORPAY_EVENTS, IS_LIVE,PAYMENT_ENABLED}      from '../../Config/razorpay.js';
 import { handleCertificateWebhook }      from '../../Service/Certificate/CertificateWebhookHandler.js';
 import {
   sendSubscriptionActivated,
@@ -31,6 +31,39 @@ export const initiateSubscription = async (req, res) => {
 
     if (!['monthly', 'yearly'].includes(billingCycle))
       return res.status(400).json({ success: false, message: '❌ Invalid billing cycle. Valid: monthly, yearly' });
+
+
+
+    // Need to oof  when we go live  hey Ai ai Look at this 
+    
+        // ── ✨ PAYMENT SYSTEM CONTROL (Backend-only toggle) ─────
+    const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === 'true';
+
+    if (!PAYMENT_ENABLED) {
+      return res.status(503).json({
+        success: false,
+        code:    'PAYMENTS_TEMPORARILY_DISABLED',
+        message: '⚠️ Payment system is being upgraded — please try again soon',
+        data: {
+          status: 'maintenance',
+          estimatedAvailability: '24-48 hours',
+          next: {
+            action:  'retry_later',
+            message: 'We\'re switching to live payments. Premium features will be available shortly!',
+          },
+          supportEmail: 'support@yourapp.com',
+        },
+      });
+    }
+
+    // ── Check for existing subscription ───────────────────────  ← This line stays the same
+
+
+
+
+
+
+
 
     // ── Check for existing subscription ───────────────────────
     const existingSub = await Subscription.findOne({ userId });
@@ -457,40 +490,44 @@ export const handleWebhook = async (req, res) => {
 // 5️⃣  GET PLANS — Protected (Returns features based on userType)
 // ─────────────────────────────────────────────────────────────
 
+
+
 const UI_FEATURES = {
   client: {
     free: [
-      "5 job posts per month",
+      "Limited job posts per month",
       "Basic applicant view",
       "Standard support",
     ],
     premium: [
       "Unlimited applicant access",
-      // ✅ CHANGED TO OBJECT: Adds the blue verified badge!
       { text: "Premium badge on profile", badge: true },
       "Priority job visibility",
       "Direct messaging with talent",
-      "Advanced analytics",
+      "Increased trust & credibility",
       "Bulk upload resumes",
     ],
   },
+  
   employee: {
     free: [
-      "10 job applications per month",
+      "Limited job applications per month",
       "Standard profile visibility",
       "Standard support",
     ],
     premium: [
       "Unlimited job applications",
-      // ✅ CHANGED TO OBJECT: Adds the blue verified badge!
       { text: "Featured profile badge", badge: true },
       "Priority support",
-      "Direct access to clients",
-      "Profile analytics",
-      "Custom branding",
+      "Priority job visibility",
+      "Higher chances of getting hired",
+      "Direct messaging with clients",
+      "Increased trust & credibility",
     ],
   },
 };
+
+
 
 export const getPlans = async (req, res) => {
   try {
