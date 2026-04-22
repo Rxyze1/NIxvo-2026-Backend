@@ -2,7 +2,7 @@
 
 import mongoose from 'mongoose';
 import { backupDocument } from '../../Service/Backup-DB/backupService.js';
-import { sendPushNotification } from '../../Controller/Notification.Controller/Notification-Helper/pushSender.js'; // ✅ NEW
+import { sendPush } from '../../Service/Notification/firebasePushService.js';
 
 const notificationSchema = new mongoose.Schema({
 
@@ -200,7 +200,12 @@ notificationSchema.post('save', async function (doc, next) {
           ...(doc.data?.senderProfilePic && { senderProfilePic: doc.data.senderProfilePic }),
         };
 
-        await sendPushNotification(doc.userId, doc.title, doc.message, pushData);
+       await sendPush({
+  userId: doc.userId,
+  title: doc.title,
+  body: doc.message,
+  data: pushData
+});
         
         // Optional: Mark in DB that push was sent successfully
         // await Notification.updateOne({ _id: doc._id }, { $set: { pushSent: true } });

@@ -46,6 +46,11 @@ export const sendPush = async ({ userId, title, body, data = {} }) => {
 // ═══════════════════════════════════════════════════════════════
 // 📲 EXPO GO SENDER
 // ═══════════════════════════════════════════════════════════════
+const sanitizeData = (data) =>
+  Object.fromEntries(
+    Object.entries(data).map(([k, v]) => [k, String(v ?? '')])
+  );
+
 const sendViaExpo = async (tokens, title, body, data) => {
   console.log(`📲 Sending to ${tokens.length} Expo Go devices...`);
   
@@ -53,8 +58,7 @@ const sendViaExpo = async (tokens, title, body, data) => {
     to: t.token,
     title,
     body,
-    data,
-    // NO android object here! Prevents "Open Expo Go" bug
+    data: sanitizeData(data), // ✅ sanitized
     ios: { sound: true, badge: 1 }
   }));
 
@@ -69,22 +73,19 @@ const sendViaExpo = async (tokens, title, body, data) => {
   });
 };
 
-// ═══════════════════════════════════════════════════════════════
-// 🔥 FIREBASE (DEV CLIENT / PRODUCTION) SENDER
-// ═══════════════════════════════════════════════════════════════
 const sendViaFirebase = async (tokens, title, body, data) => {
   console.log(`🔥 Sending to ${tokens.length} Dev/Production devices via Firebase...`);
-  
+
   const messages = tokens.map(t => ({
     token: t.token,
     notification: { title, body },
-    data,
+    data: sanitizeData(data), // ✅ sanitized
     android: {
       priority: 'high',
       notification: {
-        clickAction: "com.takeshi001.Nixvo", // <--- MAGIC LINE: Opens YOUR app
+        clickAction: 'com.takeshi001.Nixvo',
         channelId: 'default',
-        sound: true
+        sound: 'default', // ✅ string, not boolean
       }
     },
     apns: {
@@ -99,9 +100,10 @@ const sendViaFirebase = async (tokens, title, body, data) => {
     response.responses.forEach((r, i) => {
       if (!r.success) {
         console.log(`   ❌ Firebase ${i+1} Error: ${r.error.message}`);
-        // Auto-delete dead tokens from DB
-        if (r.error.code === 'messaging/invalid-registration-token' || 
-            r.error.code === 'messaging/registration-token-not-registered') {
+        if (
+          r.error.code === 'messaging/invalid-registration-token' || 
+          r.error.code === 'messaging/registration-token-not-registered'
+        ) {
           PushToken.findOneAndUpdate({ token: tokens[i].token }, { isActive: false }).exec();
         }
       } else {
