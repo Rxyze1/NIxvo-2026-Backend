@@ -96,7 +96,7 @@ export default class IntentDetector {
     const SAFE_TOPICS = new Set(['project', 'work', 'task', 'payment', 'order', 'design', 'file', 'document', 'delivery', 'requirement', 'price', 'cost', 'proposal', 'contract', 'invoice']);
     const SAFE_ACTIONS = new Set(['discuss', 'talk', 'send', 'show', 'check', 'review', 'update', 'confirm', 'start', 'finish', 'create', 'make', 'build']);
     const MALICIOUS_VERBS = new Set(['call', 'dm', 'ping', 'text', 'ring', 'dial', 'vc']);
-    const MALICIOUS_NOUNS = new Set(['number', 'num', 'mobile', 'phone', 'contact', 'details', 'info', 'whatsapp', 'insta', 'telegram', 'personal', 'dm', 'dm karo', 'direct']);
+    const MALICIOUS_NOUNS = new Set(['number', ,'number','num', 'mobile', 'phone', 'contact', 'details', 'info', 'whatsapp', 'insta', 'telegram', 'personal', 'dm', 'dm karo', 'direct']);
 
     const hasSafeTopic = nouns.some(n => SAFE_TOPICS.has(n));
     const hasSafeAction = verbs.some(v => SAFE_ACTIONS.has(v));

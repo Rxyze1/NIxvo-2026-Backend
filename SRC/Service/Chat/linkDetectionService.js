@@ -320,59 +320,62 @@ if (url.includes('@') && !url.includes('://')) {
   // 🔍 CHECK IF DOMAIN IS BLOCKED
   // ═══════════════════════════════════════════════════════════════
   
-  isBlocked(domain) {
-    const normalizedDomain = domain.toLowerCase();
-    
-    return this.BLOCKED_DOMAINS.some(blocked => {
-      const normalizedBlocked = blocked.toLowerCase();
-      
-      // Exact match
-      if (normalizedDomain === normalizedBlocked) {
-        return true;
-      }
-      
-      // Domain contains blocked (e.g., subdomain.facebook.com)
-      if (normalizedDomain.includes(normalizedBlocked)) {
-        return true;
-      }
-      
-      // Ends with blocked domain (e.g., app.discord.com ends with discord.com)
-      if (normalizedDomain.endsWith('.' + normalizedBlocked)) {
-        return true;
-      }
-      
-      return false;
-    });
-  }
+// ═══════════════════════════════════════════════════════════════
+// 🔍 CHECK IF DOMAIN IS BLOCKED (FIXED VERSION)
+// ═══════════════════════════════════════════════════════════════
 
-  // ═══════════════════════════════════════════════════════════════
-  // ✅ CHECK IF DOMAIN IS ALLOWED
-  // ═══════════════════════════════════════════════════════════════
+isBlocked(domain) {
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
   
-  isAllowed(domain) {
-    const normalizedDomain = domain.toLowerCase();
+  return this.BLOCKED_DOMAINS.some(blocked => {
+    const normalizedBlocked = blocked.toLowerCase().replace(/^www\./, '');
     
-    return this.ALLOWED_DOMAINS.some(allowed => {
-      const normalizedAllowed = allowed.toLowerCase();
-      
-      // Exact match
-      if (normalizedDomain === normalizedAllowed) {
-        return true;
-      }
-      
-      // Domain contains allowed
-      if (normalizedDomain.includes(normalizedAllowed)) {
-        return true;
-      }
-      
-      // Ends with allowed domain
-      if (normalizedDomain.endsWith('.' + normalizedAllowed)) {
-        return true;
-      }
-      
-      return false;
-    });
-  }
+    // ✅ 1. Exact match (e.g., "discord.com" === "discord.com")
+    if (normalizedDomain === normalizedBlocked) {
+      console.log(`🚫 [BLOCK] Exact match: ${normalizedDomain}`);
+      return true;
+    }
+    
+    // ✅ 2. Subdomain match (e.g., "chat.whatsapp.com" ends with "whatsapp.com")
+    if (normalizedDomain.endsWith('.' + normalizedBlocked)) {
+      console.log(`🚫 [BLOCK] Subdomain match: ${normalizedDomain} ends with .${normalizedBlocked}`);
+      return true;
+    }
+    
+    // ❌ REMOVED: .includes() - This was causing false positives!
+    // "dropbox.com".includes("box.com") was returning TRUE ❌
+    
+    return false;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ✅ CHECK IF DOMAIN IS ALLOWED (FIXED VERSION)
+// ═══════════════════════════════════════════════════════════════
+
+isAllowed(domain) {
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, '');
+  
+  return this.ALLOWED_DOMAINS.some(allowed => {
+    const normalizedAllowed = allowed.toLowerCase().replace(/^www\./, '');
+    
+    // ✅ 1. Exact match
+    if (normalizedDomain === normalizedAllowed) {
+      console.log(`✅ [ALLOW] Exact match: ${normalizedDomain}`);
+      return true;
+    }
+    
+    // ✅ 2. Subdomain match (e.g., "docs.google.com" ends with "google.com")
+    if (normalizedDomain.endsWith('.' + normalizedAllowed)) {
+      console.log(`✅ [ALLOW] Subdomain match: ${normalizedDomain} ends with .${normalizedAllowed}`);
+      return true;
+    }
+    
+    // ❌ REMOVED: .includes() to prevent false positives
+    
+    return false;
+  });
+}
 
   // ═══════════════════════════════════════════════════════════════
   // ✅ VALIDATE MESSAGE WITH LINKS
